@@ -3,6 +3,7 @@
 
 import pygame
 import threading
+import time
 
 from .logging import debug_log_warning
 
@@ -26,6 +27,7 @@ class AudioPlayer:
 
         pygame.mixer.music.play()
         while pygame.mixer.music.get_busy():
+            time.sleep(0.1)
             continue
         if on_done:
             on_done()
