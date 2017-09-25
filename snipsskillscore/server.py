@@ -1,0 +1,149 @@
+# -*-: coding utf-8 -*-
+""" Snips core server. """
+
+import json
+import time
+
+from socket import error as socket_error
+
+import paho.mqtt.client as mqtt
+
+from .logging import debug_log, LOGGING_ENABLED
+from .thread_handler import ThreadHandler
+from .intent_parser import IntentParser
+from .state_handler import StateHandler, State
+from .tts import SnipsTTS, GTTS
+
+
+class Server():
+    """ Snips core server. """
+
+    def __init__(self,
+                 mqtt_hostname,
+                 mqtt_port,
+                 logging_enabled,
+                 tts_service_id,
+                 locale,
+                 registry,
+                 handle_intent):
+        """ Initialisation.
+
+        :param config: a YAML configuration.
+        :param assistant: the client assistant class, holding the
+                          intent handler and intents registry.
+        """
+        self.registry = registry
+        self.handle_intent = handle_intent
+        self.thread_handler = ThreadHandler()
+        self.state_handler = StateHandler(self.thread_handler)
+
+        self.client = mqtt.Client()
+        self.client.on_connect = self.on_connect
+        self.client.on_disconnect = self.on_disconnect
+        self.client.on_message = self.on_message
+        self.mqtt_hostname = mqtt_hostname
+        self.mqtt_port = mqtt_port
+
+        LOGGING_ENABLED = logging_enabled
+
+        if tts_service_id == "google":
+            self.tts_service = GTTS(locale)
+        else:
+            self.tts_service = SnipsTTS(
+                self.thread_handler,
+                mqtt_hostname,
+                mqtt_port,
+                "hermes/tts/say",
+                locale)
+
+        self.first_hotword_detected = False
+
+    def start(self):
+        """ Start the MQTT client. """
+        self.thread_handler.run(target=self.start_blocking)
+        self.thread_handler.start_run_loop()
+
+    def start_blocking(self, run_event):
+        """ Start the MQTT client, as a blocking method.
+
+        :param run_event: a run event object provided by the thread handler.
+        """
+        topic = "#"
+        debug_log("Connecting to {} on port {}".format(self.mqtt_hostname,
+                                                       str(self.mqtt_port)))
+
+        retry = 0
+        while True and run_event.is_set():
+            try:
+                debug_log("Trying to connect to {}".format(self.mqtt_hostname))
+                self.client.connect(self.mqtt_hostname, self.mqtt_port, 60)
+                break
+            except (socket_error, Exception) as e:
+                debug_log("MQTT error {}".format(e))
+                time.sleep(5 + int(retry / 5))
+                retry = retry + 1
+        self.client.subscribe(topic, 0)
+        while run_event.is_set():
+            # try:
+            self.client.loop()
+            # except AttributeError as e:
+            #     debug_log("Error in mqtt run loop {}".format(e))
+            #     time.sleep(1)
+
+    # pylint: disable=unused-argument,no-self-use
+    def on_connect(self, client, userdata, flags, result_code):
+        """ Callback when the MQTT client is connected.
+
+        :param client: the client being connected.
+        :param userdata: unused.
+        :param flags: unused.
+        :param result_code: result code.
+        """
+        debug_log("Connected with result code {}".format(result_code))
+        self.state_handler.set_state(State.welcome)
+
+    # pylint: disable=unused-argument
+    def on_disconnect(self, client, userdata, result_code):
+        """ Callback when the MQTT client is disconnected. In this case,
+            the server waits five seconds before trying to reconnected.
+
+        :param client: the client being disconnected.
+        :param userdata: unused.
+        :param result_code: result code.
+        """
+        debug_log("Disconnected with result code " + str(result_code))
+        self.state_handler.set_state(State.goodbye)
+        time.sleep(5)
+        self.thread_handler.run(target=self.start_blocking)
+
+    # pylint: disable=unused-argument
+    def on_message(self, client, userdata, msg):
+        """ Callback when the MQTT client received a new message.
+
+        :param client: the MQTT client.
+        :param userdata: unused.
+        :param msg: the MQTT message.
+        """
+        if msg.payload is None or len(msg.payload) == 0:
+            debug_log("New message on topic {}".format(msg.topic))
+        if msg.topic is not None and msg.topic.startswith("hermes/nlu/") and msg.payload:
+            payload = json.loads(msg.payload.decode('utf-8'))
+            intent = IntentParser.parse(payload, self.registry.intent_classes)
+            if intent is not None and self.handle_intent is not None:
+                debug_log("New intent: {}".format(str(intent.intentName)))
+                self.handle_intent(intent, payload)
+        elif msg.topic == "hermes/hotword/toggleOn":
+            self.state_handler.set_state(State.hotword_toggle_on)
+        elif msg.topic == "hermes/hotword/detected":
+            if not self.first_hotword_detected:
+                self.client.publish(
+                    "hermes/feedback/sound/toggleOff", payload=None, qos=0, retain=False)
+                self.first_hotword_detected = True
+            else:
+                self.state_handler.set_state(State.hotword_detected)
+        elif msg.topic == "hermes/asr/toggleOn":
+            self.state_handler.set_state(State.asr_toggle_on)
+        elif msg.topic == "hermes/asr/textCaptured":
+            self.state_handler.set_state(State.asr_text_captured)
+        elif msg.topic == "snipsskills/setSnipsfile" and msg.payload:
+            self.state_handler.set_state(State.asr_text_captured)
