@@ -9,8 +9,6 @@ import subprocess
 import usb.core
 import usb.util
 
-from .logging import log_warning
-
 
 class USB:
 

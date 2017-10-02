@@ -10,10 +10,9 @@ import paho.mqtt.client as mqtt
 from socket import error as socket_error
 from gtts import gTTS
 
-from .logging import debug_log
-
 from .audio_player import AudioPlayer
 
+from . import logger
 
 class SnipsTTS:
     """ Snips TTS service. """
@@ -49,6 +48,7 @@ class SnipsTTS:
         if self.mqtt_client is None:
             return
 
+        logger.info("Snips TTS: {}".format(sentence))
         self.mqtt_client.publish(
             self.mqtt_topic,
             payload=json.dumps({'text': sentence}),
@@ -89,7 +89,7 @@ class GTTS:
             except:
                 pass
 
-        debug_log("Speak: {}".format(sentence))
+        logger.info("Google TTS: {}".format(sentence))
         tts = gTTS(text=sentence, lang=self.locale)
         tts.save(file_path)
         AudioPlayer.play_async(file_path, delete_file)

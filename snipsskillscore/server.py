@@ -8,11 +8,22 @@ from socket import error as socket_error
 
 import paho.mqtt.client as mqtt
 
-from .logging import debug_log, LOGGING_ENABLED
 from .thread_handler import ThreadHandler
 from .intent_parser import IntentParser
 from .state_handler import StateHandler, State
 from .tts import SnipsTTS, GTTS
+
+def get_default_logger():
+    import logging
+    logger = logging.getLogger()
+    handler = logging.StreamHandler()
+    log_format = '\033[2m%(asctime)s\033[0m [%(levelname)s] %(message)s'
+    date_format = '%Y-%m-%d %H:%M:%S'
+    formatter = logging.Formatter(log_format, date_format)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    return logger
 
 
 class Server():
@@ -21,17 +32,18 @@ class Server():
     def __init__(self,
                  mqtt_hostname,
                  mqtt_port,
-                 logging_enabled,
                  tts_service_id,
                  locale,
                  registry,
-                 handle_intent):
+                 handle_intent,
+                 logger=None):
         """ Initialisation.
 
         :param config: a YAML configuration.
         :param assistant: the client assistant class, holding the
                           intent handler and intents registry.
         """
+        self.logger = logger or get_default_logger()
         self.registry = registry
         self.handle_intent = handle_intent
         self.thread_handler = ThreadHandler()
@@ -43,8 +55,6 @@ class Server():
         self.client.on_message = self.on_message
         self.mqtt_hostname = mqtt_hostname
         self.mqtt_port = mqtt_port
-
-        LOGGING_ENABLED = logging_enabled
 
         if tts_service_id == "google":
             self.tts_service = GTTS(locale)
@@ -69,26 +79,25 @@ class Server():
         :param run_event: a run event object provided by the thread handler.
         """
         topic = "#"
-        debug_log("Connecting to {} on port {}".format(self.mqtt_hostname,
-                                                       str(self.mqtt_port)))
+        self.logger.info("Connecting to {} on port {}".format(self.mqtt_hostname, str(self.mqtt_port)))
 
         retry = 0
         while True and run_event.is_set():
             try:
-                debug_log("Trying to connect to {}".format(self.mqtt_hostname))
+                self.logger.info("Trying to connect to {}".format(self.mqtt_hostname))
                 self.client.connect(self.mqtt_hostname, self.mqtt_port, 60)
                 break
             except (socket_error, Exception) as e:
-                debug_log("MQTT error {}".format(e))
+                self.logger.info("MQTT error {}".format(e))
                 time.sleep(5 + int(retry / 5))
                 retry = retry + 1
         self.client.subscribe(topic, 0)
         while run_event.is_set():
-            # try:
-            self.client.loop()
-            # except AttributeError as e:
-            #     debug_log("Error in mqtt run loop {}".format(e))
-            #     time.sleep(1)
+            try:
+                self.client.loop()
+            except AttributeError as e:
+                self.logger.info("Error in mqtt run loop {}".format(e))
+                time.sleep(1)
 
     # pylint: disable=unused-argument,no-self-use
     def on_connect(self, client, userdata, flags, result_code):
@@ -99,7 +108,7 @@ class Server():
         :param flags: unused.
         :param result_code: result code.
         """
-        debug_log("Connected with result code {}".format(result_code))
+        self.logger.info("Connected with result code {}".format(result_code))
         self.state_handler.set_state(State.welcome)
 
     # pylint: disable=unused-argument
@@ -111,7 +120,7 @@ class Server():
         :param userdata: unused.
         :param result_code: result code.
         """
-        debug_log("Disconnected with result code " + str(result_code))
+        self.logger.info("Disconnected with result code " + str(result_code))
         self.state_handler.set_state(State.goodbye)
         time.sleep(5)
         self.thread_handler.run(target=self.start_blocking)
@@ -125,12 +134,13 @@ class Server():
         :param msg: the MQTT message.
         """
         if msg.payload is None or len(msg.payload) == 0:
-            debug_log("New message on topic {}".format(msg.topic))
+            pass
+            self.logger.info("New message on topic {}".format(msg.topic))
         if msg.topic is not None and msg.topic.startswith("hermes/nlu/") and msg.payload:
             payload = json.loads(msg.payload.decode('utf-8'))
             intent = IntentParser.parse(payload, self.registry.intent_classes)
             if intent is not None and self.handle_intent is not None:
-                debug_log("New intent: {}".format(str(intent.intentName)))
+                self.logger.info("New intent: {}".format(str(intent.intentName)))
                 self.handle_intent(intent, payload)
         elif msg.topic == "hermes/hotword/toggleOn":
             self.state_handler.set_state(State.hotword_toggle_on)

@@ -5,8 +5,7 @@ import pygame
 import threading
 import time
 
-from .logging import debug_log_warning
-
+from . import logger
 
 class AudioPlayer:
     """ A simple audio player based on pygame. """
@@ -22,7 +21,7 @@ class AudioPlayer:
         try:
             pygame.mixer.music.load(file_path)
         except pygame.error as e:
-            debug_log_warning(str(e))
+            logger.warning(str(e))
             return
 
         pygame.mixer.music.play()
