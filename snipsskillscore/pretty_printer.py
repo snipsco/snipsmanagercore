@@ -34,6 +34,8 @@ LIGHTBULB_SYMBOL=u'\U0001F4A1'
 DOTS_SYMBOL=u'\u22EF'
 QUESTION_SYMBOL='?'
 
+silent = False
+
 class ConsoleMessage:
 
     def __init__(self, message):
@@ -51,31 +53,31 @@ class ConsoleMessage:
 
 
 def pheader(text):
-    print(to_color_seq(BLUE) + BOLD_SEQ + UNDERLINE_SEQ + str(text) + RESET_SEQ)
+    pprint(to_color_seq(BLUE) + BOLD_SEQ + UNDERLINE_SEQ + str(text) + RESET_SEQ)
 
 def pheadersuccess(text):
-    print(to_color_seq(GREEN) + BOLD_SEQ + UNDERLINE_SEQ + str(text) + RESET_SEQ)
+    pprint(to_color_seq(GREEN) + BOLD_SEQ + UNDERLINE_SEQ + str(text) + RESET_SEQ)
 
 def pquestion(text):
-    print(to_color_seq(GREEN) + BOLD_SEQ + QUESTION_SYMBOL + ' ' + RESET_SEQ + BOLD_SEQ + str(text) + RESET_SEQ)
+    pprint(to_color_seq(GREEN) + BOLD_SEQ + QUESTION_SYMBOL + ' ' + RESET_SEQ + BOLD_SEQ + str(text) + RESET_SEQ)
 
 def psuccess(text):
-    print(to_color_seq(GREEN) + BOLD_SEQ + CHECKMARK_SYMBOL + ' ' + RESET_SEQ + str(text) + RESET_SEQ)
+    pprint(to_color_seq(GREEN) + BOLD_SEQ + CHECKMARK_SYMBOL + ' ' + RESET_SEQ + str(text) + RESET_SEQ)
 
 def psubsuccess(text):
     psubmessage(text, prepend=CHECKMARK_SYMBOL, overwrite_previous=False)
 
 def perror(text):
-    print(to_color_seq(RED) + BOLD_SEQ + CROSS_SYMBOL + ' ' + str(text) + RESET_SEQ)
+    pprint(to_color_seq(RED) + BOLD_SEQ + CROSS_SYMBOL + ' ' + str(text) + RESET_SEQ)
 
 def pwarning(text):
-    print(to_color_seq(YELLOW) + BOLD_SEQ + LIGHTNING_SYMBOL + ' ' + RESET_SEQ + str(text) + RESET_SEQ)
+    pprint(to_color_seq(YELLOW) + BOLD_SEQ + LIGHTNING_SYMBOL + ' ' + RESET_SEQ + str(text) + RESET_SEQ)
 
 def phint(text):
-    print(to_color_seq(YELLOW) + BOLD_SEQ + LIGHTBULB_SYMBOL + ' ' + RESET_SEQ + str(text) + RESET_SEQ)
+    pprint(to_color_seq(YELLOW) + BOLD_SEQ + LIGHTBULB_SYMBOL + ' ' + RESET_SEQ + str(text) + RESET_SEQ)
 
 def pcommand(text):
-    print(to_color_seq(BLUE) + BOLD_SEQ + CHEVRON_SYMBOL + ' ' + RESET_SEQ + BOLD_SEQ + str(text) + RESET_SEQ)
+    pprint(to_color_seq(BLUE) + BOLD_SEQ + CHEVRON_SYMBOL + ' ' + RESET_SEQ + BOLD_SEQ + str(text) + RESET_SEQ)
 
 def psubmessage(text, indent=False, prepend=None, overwrite_previous=False):
     text = DIM_SEQ + text
@@ -89,9 +91,11 @@ def psubmessage(text, indent=False, prepend=None, overwrite_previous=False):
     pprint(text + RESET_SEQ, overwrite_previous=overwrite_previous)
 
 def preset():
-    print(RESET_SEQ + '\r')
+    pprint(RESET_SEQ + '\r')
 
 def pprint(message, overwrite_previous=False):
+    if silent:
+        return
     if overwrite_previous:
         sys.stdout.write("\033[F")
     print(message)
