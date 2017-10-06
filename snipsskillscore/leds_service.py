@@ -12,13 +12,11 @@ from usb.core import USBError
 from .singleton import Singleton
 from .usb_utils import USB
 
-from .logger import LOGGER
-
 try:
     import respeaker.usb_hid as usb_hid
 except USBError:
-    LOGGER.error("Error accessing microphone: insufficient permissions. " +
-                 "You may need to replug your microphone and restart your device.")
+    print("Error accessing microphone: insufficient permissions. " +
+          "You may need to replug your microphone and restart your device.")
 
 
 class LedsService:

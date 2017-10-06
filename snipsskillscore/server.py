@@ -12,7 +12,6 @@ from .thread_handler import ThreadHandler
 from .intent_parser import IntentParser
 from .state_handler import StateHandler, State
 from .tts import SnipsTTS, GTTS
-from .logger import LOGGER
 
 class Server():
     """ Snips core server. """
@@ -31,7 +30,7 @@ class Server():
         :param assistant: the client assistant class, holding the
                           intent handler and intents registry.
         """
-        self.logger = logger or LOGGER
+        self.logger = logger
         self.registry = registry
         self.handle_intent = handle_intent
         self.thread_handler = ThreadHandler()
@@ -45,14 +44,15 @@ class Server():
         self.mqtt_port = mqtt_port
 
         if tts_service_id == "google":
-            self.tts_service = GTTS(locale)
+            self.tts_service = GTTS(locale, logger=self.logger)
         else:
             self.tts_service = SnipsTTS(
                 self.thread_handler,
                 mqtt_hostname,
                 mqtt_port,
                 "hermes/tts/say",
-                locale)
+                locale,
+                logger=self.logger)
 
         self.first_hotword_detected = False
 
@@ -67,16 +67,16 @@ class Server():
         :param run_event: a run event object provided by the thread handler.
         """
         topic = "#"
-        self.logger.info("Connecting to {} on port {}".format(self.mqtt_hostname, str(self.mqtt_port)))
+        self.log_info("Connecting to {} on port {}".format(self.mqtt_hostname, str(self.mqtt_port)))
 
         retry = 0
         while True and run_event.is_set():
             try:
-                self.logger.info("Trying to connect to {}".format(self.mqtt_hostname))
+                self.log_info("Trying to connect to {}".format(self.mqtt_hostname))
                 self.client.connect(self.mqtt_hostname, self.mqtt_port, 60)
                 break
             except (socket_error, Exception) as e:
-                self.logger.info("MQTT error {}".format(e))
+                self.log_info("MQTT error {}".format(e))
                 time.sleep(5 + int(retry / 5))
                 retry = retry + 1
         self.client.subscribe(topic, 0)
@@ -84,7 +84,7 @@ class Server():
             try:
                 self.client.loop()
             except AttributeError as e:
-                self.logger.info("Error in mqtt run loop {}".format(e))
+                self.log_info("Error in mqtt run loop {}".format(e))
                 time.sleep(1)
 
     # pylint: disable=unused-argument,no-self-use
@@ -96,7 +96,7 @@ class Server():
         :param flags: unused.
         :param result_code: result code.
         """
-        self.logger.info("Connected with result code {}".format(result_code))
+        self.log_info("Connected with result code {}".format(result_code))
         self.state_handler.set_state(State.welcome)
 
     # pylint: disable=unused-argument
@@ -108,7 +108,7 @@ class Server():
         :param userdata: unused.
         :param result_code: result code.
         """
-        self.logger.info("Disconnected with result code " + str(result_code))
+        self.log_info("Disconnected with result code " + str(result_code))
         self.state_handler.set_state(State.goodbye)
         time.sleep(5)
         self.thread_handler.run(target=self.start_blocking)
@@ -123,12 +123,12 @@ class Server():
         """
         if msg.payload is None or len(msg.payload) == 0:
             pass
-            self.logger.info("New message on topic {}".format(msg.topic))
+            self.log_info("New message on topic {}".format(msg.topic))
         if msg.topic is not None and msg.topic.startswith("hermes/nlu/") and msg.payload:
             payload = json.loads(msg.payload.decode('utf-8'))
             intent = IntentParser.parse(payload, self.registry.intent_classes)
             if intent is not None and self.handle_intent is not None:
-                self.logger.info("New intent: {}".format(str(intent.intentName)))
+                self.log_info("New intent: {}".format(str(intent.intentName)))
                 self.handle_intent(intent, payload)
         elif msg.topic == "hermes/hotword/toggleOn":
             self.state_handler.set_state(State.hotword_toggle_on)
@@ -145,3 +145,15 @@ class Server():
             self.state_handler.set_state(State.asr_text_captured)
         elif msg.topic == "snipsskills/setSnipsfile" and msg.payload:
             self.state_handler.set_state(State.asr_text_captured)
+
+    def log_info(self, message):
+        if self.logger is not None:
+            self.logger.info(message)
+
+    def log_debug(self, message):
+        if self.logger is not None:
+            self.logger.debug(message)
+
+    def log_error(self, message):
+        if self.logger is not None:
+            self.logger.error(message)

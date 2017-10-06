@@ -12,12 +12,10 @@ from gtts import gTTS
 
 from .audio_player import AudioPlayer
 
-from .logger import LOGGER
-
 class SnipsTTS:
     """ Snips TTS service. """
 
-    def __init__(self, thread_handler, mqtt_hostname, mqtt_port, mqtt_topic, locale):
+    def __init__(self, thread_handler, mqtt_hostname, mqtt_port, mqtt_topic, locale, logger=None):
         """ Initialise the service.
 
         :param mqtt_hostname: the MQTT broker hostname.
@@ -25,6 +23,7 @@ class SnipsTTS:
         :param mqtt_topic: the topic on which to post the sentence.
         :param locale: the language locale, e.g. "fr" or "en_US".
         """
+        self.logger = logger
         self.locale = locale.split("_")[0]
 
         self.mqtt_topic = mqtt_topic
@@ -48,7 +47,8 @@ class SnipsTTS:
         if self.mqtt_client is None:
             return
 
-        LOGGER.info("Snips TTS: {}".format(sentence))
+        if self.logger is not None:
+            self.logger.info("Snips TTS: {}".format(sentence))
         self.mqtt_client.publish(
             self.mqtt_topic,
             payload=json.dumps({'text': sentence}),
@@ -59,11 +59,12 @@ class SnipsTTS:
 class GTTS:
     """ Google TTS service. """
 
-    def __init__(self, locale):
+    def __init__(self, locale, logger=None):
         """ Initialise the service.
 
         :param locale: the language locale, e.g. "fr" or "en_US".
         """
+        self.logger = logger
         self.locale = locale.split("_")[0]
 
     def speak(self, sentence):
@@ -89,7 +90,8 @@ class GTTS:
             except:
                 pass
 
-        LOGGER.info("Google TTS: {}".format(sentence))
+        if self.logger is not None:
+            self.logger.info("Google TTS: {}".format(sentence))
         tts = gTTS(text=sentence, lang=self.locale)
         tts.save(file_path)
         AudioPlayer.play_async(file_path, delete_file)
