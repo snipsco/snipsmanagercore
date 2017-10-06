@@ -13,18 +13,7 @@ from .intent_parser import IntentParser
 from .state_handler import StateHandler, State
 from .tts import SnipsTTS, GTTS
 
-def get_default_logger():
-    import logging
-    logger = logging.getLogger()
-    handler = logging.StreamHandler()
-    log_format = '\033[2m%(asctime)s\033[0m [%(levelname)s] %(message)s'
-    date_format = '%Y-%m-%d %H:%M:%S'
-    formatter = logging.Formatter(log_format, date_format)
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
-    return logger
-
+from . import LOGGER
 
 class Server():
     """ Snips core server. """
@@ -43,7 +32,7 @@ class Server():
         :param assistant: the client assistant class, holding the
                           intent handler and intents registry.
         """
-        self.logger = logger or get_default_logger()
+        self.logger = logger or LOGGER
         self.registry = registry
         self.handle_intent = handle_intent
         self.thread_handler = ThreadHandler()
