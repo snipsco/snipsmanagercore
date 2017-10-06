@@ -12,7 +12,7 @@ from gtts import gTTS
 
 from .audio_player import AudioPlayer
 
-from . import logger
+from .logger import LOGGER
 
 class SnipsTTS:
     """ Snips TTS service. """
@@ -48,7 +48,7 @@ class SnipsTTS:
         if self.mqtt_client is None:
             return
 
-        logger.info("Snips TTS: {}".format(sentence))
+        LOGGER.info("Snips TTS: {}".format(sentence))
         self.mqtt_client.publish(
             self.mqtt_topic,
             payload=json.dumps({'text': sentence}),
@@ -89,7 +89,7 @@ class GTTS:
             except:
                 pass
 
-        logger.info("Google TTS: {}".format(sentence))
+        LOGGER.info("Google TTS: {}".format(sentence))
         tts = gTTS(text=sentence, lang=self.locale)
         tts.save(file_path)
         AudioPlayer.play_async(file_path, delete_file)

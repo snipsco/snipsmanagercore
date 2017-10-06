@@ -12,7 +12,7 @@ from usb.core import USBError
 from .singleton import Singleton
 from .usb_utils import USB
 
-from . import LOGGER
+from .logger import LOGGER
 
 try:
     import respeaker.usb_hid as usb_hid

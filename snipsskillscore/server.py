@@ -12,8 +12,7 @@ from .thread_handler import ThreadHandler
 from .intent_parser import IntentParser
 from .state_handler import StateHandler, State
 from .tts import SnipsTTS, GTTS
-
-from . import LOGGER
+from .logger import LOGGER
 
 class Server():
     """ Snips core server. """
