@@ -98,7 +98,7 @@ def pprint(message, overwrite_previous=False):
         return
     if overwrite_previous:
         sys.stdout.write("\033[F")
-    print(message)
+    print(message.encode('utf-8'))
 
 def generate_user_input_string(text):
     return RESET_SEQ + INDENT_STR + text + ' ' + RESET_SEQ + to_color_seq(CYAN)
