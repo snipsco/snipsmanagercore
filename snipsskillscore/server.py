@@ -121,9 +121,9 @@ class Server():
         :param userdata: unused.
         :param msg: the MQTT message.
         """
+        self.log_info("New message on topic {}".format(msg.topic))
         if msg.payload is None or len(msg.payload) == 0:
             pass
-            self.log_info("New message on topic {}".format(msg.topic))
         if msg.topic is not None and msg.topic.startswith("hermes/nlu/") and msg.payload:
             payload = json.loads(msg.payload.decode('utf-8'))
             intent = IntentParser.parse(payload, self.registry.intent_classes)
