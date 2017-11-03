@@ -19,6 +19,7 @@ MQTT_TOPIC_HOTWORD = "hermes/hotword/"
 MQTT_TOPIC_ASR = "hermes/asr/"
 MQTT_TOPIC_DIALOG_MANAGER = "hermes/dialogueManager/"
 MQTT_TOPIC_SNIPSFILE = "snipsskills/setSnipsfile/"
+MQTT_TOPIC_INTENT = "hermes/intent/"
 
 class Server():
     """ Snips core server. """
@@ -86,11 +87,11 @@ class Server():
                 time.sleep(5 + int(retry / 5))
                 retry = retry + 1
 
-        self.client.subscribe(MQTT_TOPIC_NLU + '#', 0)
         self.client.subscribe(MQTT_TOPIC_HOTWORD + '#', 0)
         self.client.subscribe(MQTT_TOPIC_ASR + '#', 0)
         self.client.subscribe(MQTT_TOPIC_DIALOG_MANAGER + '#', 0)
         self.client.subscribe(MQTT_TOPIC_SNIPSFILE, 0)
+        self.client.subscribe(MQTT_TOPIC_INTENT + '#', 0)
 
         while run_event.is_set():
             try:
@@ -136,7 +137,7 @@ class Server():
         self.log_info("New message on topic {}".format(msg.topic))
         if msg.payload is None or len(msg.payload) == 0:
             pass
-        if msg.topic is not None and msg.topic.startswith(MQTT_TOPIC_NLU) and msg.payload:
+        if msg.topic is not None and msg.topic.startswith(MQTT_TOPIC_INTENT) and msg.payload:
             payload = json.loads(msg.payload.decode('utf-8'))
             intent = IntentParser.parse(payload, self.registry.intent_classes)
             if intent is not None and self.handle_intent is not None:
