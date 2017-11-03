@@ -221,3 +221,19 @@ class IntentParser:
         except (KeyError, TypeError):
             pass
         return None
+
+    @staticmethod
+    def get_session_id(payload):
+      result = None
+      
+      if 'sessionID' in payload:
+        result = payload['sessionID']
+      return result
+
+    @staticmethod
+    def get_site_id(payload):
+      result = None
+
+      if 'siteID' in payload:
+        result = payload['siteID']
+      return result

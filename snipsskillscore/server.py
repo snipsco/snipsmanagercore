@@ -13,6 +13,13 @@ from .intent_parser import IntentParser
 from .state_handler import StateHandler, State
 from .tts import SnipsTTS, GTTS
 
+
+MQTT_TOPIC_NLU = "hermes/nlu/"
+MQTT_TOPIC_HOTWORD = "hermes/hotword/"
+MQTT_TOPIC_ASR = "hermes/asr/"
+MQTT_TOPIC_DIALOG_MANAGER = "hermes/dialogueManager/"
+MQTT_TOPIC_SNIPSFILE = "snipsskills/setSnipsfile/"
+
 class Server():
     """ Snips core server. """
 
@@ -66,7 +73,6 @@ class Server():
 
         :param run_event: a run event object provided by the thread handler.
         """
-        topic = "#"
         self.log_info("Connecting to {} on port {}".format(self.mqtt_hostname, str(self.mqtt_port)))
 
         retry = 0
@@ -79,7 +85,13 @@ class Server():
                 self.log_info("MQTT error {}".format(e))
                 time.sleep(5 + int(retry / 5))
                 retry = retry + 1
-        self.client.subscribe(topic, 0)
+
+        self.client.subscribe(MQTT_TOPIC_NLU + '#', 0)
+        self.client.subscribe(MQTT_TOPIC_HOTWORD + '#', 0)
+        self.client.subscribe(MQTT_TOPIC_ASR + '#', 0)
+        self.client.subscribe(MQTT_TOPIC_DIALOG_MANAGER + '#', 0)
+        self.client.subscribe(MQTT_TOPIC_SNIPSFILE, 0)
+
         while run_event.is_set():
             try:
                 self.client.loop()
@@ -124,26 +136,26 @@ class Server():
         self.log_info("New message on topic {}".format(msg.topic))
         if msg.payload is None or len(msg.payload) == 0:
             pass
-        if msg.topic is not None and msg.topic.startswith("hermes/nlu/") and msg.payload:
+        if msg.topic is not None and msg.topic.startswith(MQTT_TOPIC_NLU) and msg.payload:
             payload = json.loads(msg.payload.decode('utf-8'))
             intent = IntentParser.parse(payload, self.registry.intent_classes)
             if intent is not None and self.handle_intent is not None:
                 self.log_info("New intent: {}".format(str(intent.intentName)))
                 self.handle_intent(intent, payload)
-        elif msg.topic == "hermes/hotword/toggleOn":
+        elif msg.topic == MQTT_TOPIC_HOTWORD + "toggleOn":
             self.state_handler.set_state(State.hotword_toggle_on)
-        elif msg.topic == "hermes/hotword/detected":
+        elif msg.topic == MQTT_TOPIC_HOTWORD + "detected":
             if not self.first_hotword_detected:
                 self.client.publish(
                     "hermes/feedback/sound/toggleOff", payload=None, qos=0, retain=False)
                 self.first_hotword_detected = True
             else:
                 self.state_handler.set_state(State.hotword_detected)
-        elif msg.topic == "hermes/asr/toggleOn":
+        elif msg.topic == MQTT_TOPIC_ASR + "toggleOn":
             self.state_handler.set_state(State.asr_toggle_on)
-        elif msg.topic == "hermes/asr/textCaptured":
+        elif msg.topic == MQTT_TOPIC_ASR + "textCaptured":
             self.state_handler.set_state(State.asr_text_captured)
-        elif msg.topic == "snipsskills/setSnipsfile" and msg.payload:
+        elif msg.topic == MQTT_TOPIC_SNIPSFILE and msg.payload:
             self.state_handler.set_state(State.asr_text_captured)
 
     def log_info(self, message):
