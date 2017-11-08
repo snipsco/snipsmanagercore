@@ -122,13 +122,15 @@ class Server():
         :param msg: the MQTT message.
         """
         self.log_info("New message on topic {}".format(msg.topic))
+        self.log_debug("Payload {}".format(msg.payload))
         if msg.payload is None or len(msg.payload) == 0:
             pass
         if msg.topic is not None and msg.topic.startswith("hermes/nlu/") and msg.payload:
             payload = json.loads(msg.payload.decode('utf-8'))
             intent = IntentParser.parse(payload, self.registry.intent_classes)
+            self.log_debug("Parsed intent: {}".format(intent))
             if intent is not None and self.handle_intent is not None:
-                self.log_info("New intent: {}".format(str(intent.intentName)))
+                self.log_debug("New intent: {}".format(str(intent.intentName)))
                 self.handle_intent(intent, payload)
         elif msg.topic == "hermes/hotword/toggleOn":
             self.state_handler.set_state(State.hotword_toggle_on)
