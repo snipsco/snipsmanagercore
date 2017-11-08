@@ -1,2 +1,2 @@
 include LICENSE.txt
-include snipsskillscore/data/sounds/*
+include snipsmanagercore/data/sounds/*

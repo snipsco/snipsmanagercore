@@ -145,7 +145,7 @@ class Server():
             self.state_handler.set_state(State.asr_toggle_on)
         elif msg.topic == "hermes/asr/textCaptured":
             self.state_handler.set_state(State.asr_text_captured)
-        elif msg.topic == "snipsskills/setSnipsfile" and msg.payload:
+        elif msg.topic == "snipsmanager/setSnipsfile" and msg.payload:
             self.state_handler.set_state(State.asr_text_captured)
 
     def log_info(self, message):

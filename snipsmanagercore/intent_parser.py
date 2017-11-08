@@ -3,8 +3,8 @@
 
 from dateutil.parser import parse
 
-from snipsskillscore.instant_time import InstantTime
-from snipsskillscore.time_interval import TimeInterval
+from snipsmanagercore.instant_time import InstantTime
+from snipsmanagercore.time_interval import TimeInterval
 
 
 class IntentParser:

@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name='snipsskillscore',
+    name='snipsmanagercore',
     version='0.1.5.9.5',
     description='The Snips skills core utilities for creating end-to-end assistants',
     author='Michael Fester',
@@ -24,7 +24,7 @@ setup(
     test_suite="tests",
     keywords=['snips'],
     packages=[
-        'snipsskillscore'
+        'snipsmanagercore'
     ],
     include_package_data=True,
 )
