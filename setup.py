@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='snipsmanagercore',
-    version='0.1.5.9.6',
+    version='0.1.5.9.7',
     description='The Snips skills core utilities for creating end-to-end assistants',
     author='Michael Fester',
     author_email='michael.fester@gmail.com',

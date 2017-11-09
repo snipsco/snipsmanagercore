@@ -5,7 +5,7 @@ from .sound_service import SoundService
 from .leds_service import LedsService
 
 class State:
-    none, welcome, goodbye, hotword_toggle_on, hotword_detected, asr_toggle_on, asr_text_captured, error, idle = range(
+    none, welcome, goodbye, hotword_toggle_on, hotword_detected, asr_start_listening, asr_text_captured, error, idle = range(
         9)
 
 class StateHandler:
@@ -25,7 +25,7 @@ class StateHandler:
             self.leds_service.start_animation(LedsService.State.standby)
         elif state == State.hotword_detected:
             SoundService.play(SoundService.State.hotword_detected)
-        elif state == State.asr_toggle_on and self.state != state:
+        elif state == State.asr_start_listening and self.state != state:
             self.leds_service.start_animation(LedsService.State.listening)
         elif state == State.asr_text_captured:
             SoundService.play(SoundService.State.asr_text_captured)

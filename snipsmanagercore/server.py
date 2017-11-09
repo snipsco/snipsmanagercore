@@ -3,6 +3,7 @@
 
 import json
 import time
+import re
 
 from socket import error as socket_error
 
@@ -12,6 +13,8 @@ from .thread_handler import ThreadHandler
 from .intent_parser import IntentParser
 from .state_handler import StateHandler, State
 from .tts import SnipsTTS, GTTS
+
+HOTWORD_DETECTED_RE = re.compile("^hermes\/hotword(\/[a-zA-Z0-9]+)*\/detected$")
 
 class Server():
     """ Snips core server. """
@@ -66,7 +69,8 @@ class Server():
 
         :param run_event: a run event object provided by the thread handler.
         """
-        topic = "#"
+        topics = [("hermes/intent/#",0), ("hermes/hotword/#", 0), ("hermes/asr/#", 0), ("snipsmanager/#", 0)]
+
         self.log_info("Connecting to {} on port {}".format(self.mqtt_hostname, str(self.mqtt_port)))
 
         retry = 0
@@ -79,7 +83,7 @@ class Server():
                 self.log_info("MQTT error {}".format(e))
                 time.sleep(5 + int(retry / 5))
                 retry = retry + 1
-        self.client.subscribe(topic, 0)
+        self.client.subscribe(topics)
         while run_event.is_set():
             try:
                 self.client.loop()
@@ -125,24 +129,23 @@ class Server():
         self.log_debug("Payload {}".format(msg.payload))
         if msg.payload is None or len(msg.payload) == 0:
             pass
-        if msg.topic is not None and msg.topic.startswith("hermes/nlu/") and msg.payload:
+        if msg.topic is not None and msg.topic.startswith("hermes/intent/") and msg.payload:
             payload = json.loads(msg.payload.decode('utf-8'))
             intent = IntentParser.parse(payload, self.registry.intent_classes)
             self.log_debug("Parsed intent: {}".format(intent))
             if intent is not None and self.handle_intent is not None:
                 self.log_debug("New intent: {}".format(str(intent.intentName)))
                 self.handle_intent(intent, payload)
-        elif msg.topic == "hermes/hotword/toggleOn":
+        elif msg.topic is not None and msg == "hermes/hotword/toggleOn":
             self.state_handler.set_state(State.hotword_toggle_on)
-        elif msg.topic == "hermes/hotword/detected":
+        elif HOTWORD_DETECTED_RE.match(msg.topic):
             if not self.first_hotword_detected:
                 self.client.publish(
                     "hermes/feedback/sound/toggleOff", payload=None, qos=0, retain=False)
                 self.first_hotword_detected = True
-            else:
-                self.state_handler.set_state(State.hotword_detected)
-        elif msg.topic == "hermes/asr/toggleOn":
-            self.state_handler.set_state(State.asr_toggle_on)
+            self.state_handler.set_state(State.hotword_detected)
+        elif msg.topic == "hermes/asr/startListening":
+            self.state_handler.set_state(State.asr_start_listening)
         elif msg.topic == "hermes/asr/textCaptured":
             self.state_handler.set_state(State.asr_text_captured)
         elif msg.topic == "snipsmanager/setSnipsfile" and msg.payload:
