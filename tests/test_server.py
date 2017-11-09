@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from snipsskillscore.server import Server
+from snipsmanagercore.server import Server
 
 
 class TestServer(TestCase):

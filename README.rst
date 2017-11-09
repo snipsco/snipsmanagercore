@@ -44,14 +44,14 @@ information.
 .. |Build Status| image:: https://travis-ci.org/snipsco/snipsmanagercore.svg
    :target: https://travis-ci.org/snipsco/snipsmanagercore
    :alt: Build Status
-.. |PyPI| image:: https://img.shields.io/pypi/v/snipsskillscore.svg
-   :target: https://pypi.python.org/pypi/snipsskillscore
+.. |PyPI| image:: https://img.shields.io/pypi/v/snipsmanagercore.svg
+   :target: https://pypi.python.org/pypi/snipsmanagercore
    :alt: PyPI
 .. |MIT License| image:: https://img.shields.io/badge/license-MIT-blue.svg
    :target: https://raw.githubusercontent.com/snipsco/snipsmanagercore/master/LICENSE.txt
    :alt: MIT License
 
-.. _`PyPI`: https://pypi.python.org/pypi/snipsskillscore
+.. _`PyPI`: https://pypi.python.org/pypi/snipsmanagercore
 .. _`pip`: http://www.pip-installer.org
 .. _`Snips`: https://www.snips.ai
 .. _`LICENSE.txt`: https://github.com/snipsco/snipsmanagercore/blob/master/LICENSE.txt
