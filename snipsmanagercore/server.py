@@ -26,6 +26,8 @@ class Server():
                  locale,
                  registry,
                  handle_intent,
+                 handle_start_listening = None,
+                 handle_done_listening = None,
                  logger=None):
         """ Initialisation.
 
@@ -36,6 +38,8 @@ class Server():
         self.logger = logger
         self.registry = registry
         self.handle_intent = handle_intent
+        self.handle_start_listening = handle_start_listening
+        self.handle_done_listening = handle_done_listening
         self.thread_handler = ThreadHandler()
         self.state_handler = StateHandler(self.thread_handler)
 
@@ -144,10 +148,14 @@ class Server():
                     "hermes/feedback/sound/toggleOff", payload=None, qos=0, retain=False)
                 self.first_hotword_detected = True
             self.state_handler.set_state(State.hotword_detected)
+            if self.handle_start_listening is not None:
+                self.handle_start_listening()
         elif msg.topic == "hermes/asr/startListening":
             self.state_handler.set_state(State.asr_start_listening)
         elif msg.topic == "hermes/asr/textCaptured":
             self.state_handler.set_state(State.asr_text_captured)
+            if self.handle_done_listening is not None:
+                self.handle_done_listening()
         elif msg.topic == "snipsmanager/setSnipsfile" and msg.payload:
             self.state_handler.set_state(State.asr_text_captured)
 
