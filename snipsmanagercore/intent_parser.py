@@ -48,7 +48,11 @@ class IntentParser:
         :return: the simpe intent name.
         """
         if 'intent' in payload and 'intentName' in payload['intent']:
-            return payload['intent']['intentName'].split('__')[-1]
+            # Snips (public) => IntentName
+            # public         => username:IntentName
+            # private        => private:IntentName
+            # private legacy => userId__IntentName
+            return payload['intent']['intentName'].split('__')[-1].split(":")[-1]
         return None
 
     @staticmethod
