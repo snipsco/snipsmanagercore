@@ -1,12 +1,12 @@
 from setuptools import setup
 
 setup(
-    name='snipsskillscore',
-    version='0.1.5.9.5',
-    description='The Snips skills core utilities for creating end-to-end assistants',
-    author='Michael Fester',
-    author_email='michael.fester@gmail.com',
-    url='https://github.com/snipsco/snips-skills-core',
+    name='snipsmanagercore',
+    version='0.1.5.9.9',
+    description='The Snips manager core utilities for creating end-to-end assistants',
+    author='Snips',
+    author_email='labs@snips.ai',
+    url='https://github.com/snipsco/snipsmanagercore',
     download_url='',
     license='MIT',
     install_requires=[
@@ -24,7 +24,7 @@ setup(
     test_suite="tests",
     keywords=['snips'],
     packages=[
-        'snipsskillscore'
+        'snipsmanagercore'
     ],
     include_package_data=True,
 )

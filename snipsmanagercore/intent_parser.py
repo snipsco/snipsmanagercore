@@ -3,8 +3,8 @@
 
 from dateutil.parser import parse
 
-from snipsskillscore.instant_time import InstantTime
-from snipsskillscore.time_interval import TimeInterval
+from snipsmanagercore.instant_time import InstantTime
+from snipsmanagercore.time_interval import TimeInterval
 
 
 class IntentParser:
@@ -48,7 +48,11 @@ class IntentParser:
         :return: the simpe intent name.
         """
         if 'intent' in payload and 'intentName' in payload['intent']:
-            return payload['intent']['intentName'].split('__')[-1]
+            # Snips (public) => IntentName
+            # public         => username:IntentName
+            # private        => private:IntentName
+            # private legacy => userId__IntentName
+            return payload['intent']['intentName'].split('__')[-1].split(":")[-1]
         return None
 
     @staticmethod
