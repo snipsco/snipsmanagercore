@@ -10,6 +10,7 @@ import paho.mqtt.client as mqtt
 
 from .thread_handler import ThreadHandler
 from .intent_parser import IntentParser
+from .snips_dialogue_api import SnipsDialogueAPI
 from .state_handler import StateHandler, State
 from .tts import SnipsTTS, GTTS
 
@@ -20,6 +21,9 @@ MQTT_TOPIC_ASR = "hermes/asr/"
 MQTT_TOPIC_DIALOG_MANAGER = "hermes/dialogueManager/"
 MQTT_TOPIC_SNIPSFILE = "snipsskills/setSnipsfile/"
 MQTT_TOPIC_INTENT = "hermes/intent/"
+MQTT_TOPIC_SESSION_QUEUED = MQTT_TOPIC_DIALOG_MANAGER + "sessionQueued"
+MQTT_TOPIC_SESSION_STARTED = MQTT_TOPIC_DIALOG_MANAGER + "sessionStarted"
+MQTT_TOPIC_SESSION_ENDED = MQTT_TOPIC_DIALOG_MANAGER + "sessionEnded"
 
 class Server():
     """ Snips core server. """
@@ -50,6 +54,7 @@ class Server():
         self.client.on_message = self.on_message
         self.mqtt_hostname = mqtt_hostname
         self.mqtt_port = mqtt_port
+        self.dialogue = SnipsDialogueAPI(self.client)
 
         if tts_service_id == "google":
             self.tts_service = GTTS(locale, logger=self.logger)
@@ -158,6 +163,13 @@ class Server():
             self.state_handler.set_state(State.asr_text_captured)
         elif msg.topic == MQTT_TOPIC_SNIPSFILE and msg.payload:
             self.state_handler.set_state(State.asr_text_captured)
+        elif msg.topic == MQTT_TOPIC_SESSION_STARTED:
+            self.state_handler.set_state(State.session_started)
+        elif msg.topic == MQTT_TOPIC_SESSION_ENDED:
+            self.state_handler.set_state(State.session_ended)
+        elif msg.topic == MQTT_TOPIC_SESSION_QUEUED:
+            self.state_handler.set_state(State.session_queued)
+
 
     def log_info(self, message):
         if self.logger is not None:
