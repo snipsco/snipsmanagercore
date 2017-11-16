@@ -137,8 +137,9 @@ class Server():
             payload = json.loads(msg.payload.decode('utf-8'))
             intent = IntentParser.parse(payload, self.registry.intent_classes)
             self.log_debug("Parsed intent: {}".format(intent))
-            if intent is not None and self.handle_intent is not None:
-                self.log_debug("New intent: {}".format(str(intent.intentName)))
+            if self.handle_intent is not None:
+                if intent is not None:
+                    self.log_debug("New intent: {}".format(str(intent.intentName)))
                 self.handle_intent(intent, payload)
         elif msg.topic is not None and msg == "hermes/hotword/toggleOn":
             self.state_handler.set_state(State.hotword_toggle_on)
