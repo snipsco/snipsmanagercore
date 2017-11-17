@@ -73,7 +73,7 @@ class Server():
 
         :param run_event: a run event object provided by the thread handler.
         """
-        topics = [("hermes/intent/#",0), ("hermes/hotword/#", 0), ("hermes/asr/#", 0), ("snipsmanager/#", 0)]
+        topics = [("hermes/intent/#",0), ("hermes/hotword/#", 0), ("hermes/asr/#", 0), ("hermes/nlu/#", 0), ("snipsmanager/#", 0)]
 
         self.log_info("Connecting to {} on port {}".format(self.mqtt_hostname, str(self.mqtt_port)))
 
@@ -129,6 +129,9 @@ class Server():
         :param userdata: unused.
         :param msg: the MQTT message.
         """
+        if msg is None:
+            return
+
         self.log_info("New message on topic {}".format(msg.topic))
         self.log_debug("Payload {}".format(msg.payload))
         if msg.payload is None or len(msg.payload) == 0:
@@ -141,7 +144,7 @@ class Server():
                 if intent is not None:
                     self.log_debug("New intent: {}".format(str(intent.intentName)))
                 self.handle_intent(intent, payload)
-        elif msg.topic is not None and msg == "hermes/hotword/toggleOn":
+        elif msg.topic is not None and msg.topic == "hermes/hotword/toggleOn":
             self.state_handler.set_state(State.hotword_toggle_on)
         elif HOTWORD_DETECTED_RE.match(msg.topic):
             if not self.first_hotword_detected:
@@ -157,6 +160,8 @@ class Server():
             self.state_handler.set_state(State.asr_text_captured)
             if self.handle_done_listening is not None:
                 self.handle_done_listening()
+        elif msg.topic is not None and msg.topic == "hermes/nlu/intentNotRecognized":
+            self.handle_intent(None, None)
         elif msg.topic == "snipsmanager/setSnipsfile" and msg.payload:
             self.state_handler.set_state(State.asr_text_captured)
 
