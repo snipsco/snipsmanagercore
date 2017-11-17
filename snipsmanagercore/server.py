@@ -162,6 +162,10 @@ class Server():
                 self.handle_done_listening()
         elif msg.topic is not None and msg.topic == "hermes/nlu/intentNotRecognized":
             self.handle_intent(None, None)
+        elif msg.topic is not None and msg.topic == "hermes/asr/textCaptured":
+            payload = json.loads(msg.payload.decode('utf-8'))
+            if payload['text'] == '':
+                self.handle_intent(None, None)
         elif msg.topic == "snipsmanager/setSnipsfile" and msg.payload:
             self.state_handler.set_state(State.asr_text_captured)
 
