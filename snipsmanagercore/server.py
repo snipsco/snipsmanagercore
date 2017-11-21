@@ -158,6 +158,8 @@ class Server():
             self.state_handler.set_state(State.asr_start_listening)
         elif msg.topic == "hermes/asr/textCaptured":
             self.state_handler.set_state(State.asr_text_captured)
+            if msg.payload is not None:
+                self.log_debug("Text captured: {}".format(str(msg.payload)))
             if self.handle_done_listening is not None:
                 self.handle_done_listening()
         elif msg.topic is not None and msg.topic == "hermes/nlu/intentNotRecognized":
