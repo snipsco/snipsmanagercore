@@ -90,6 +90,8 @@ class Server():
 
         :param run_event: a run event object provided by the thread handler.
         """
+        topics = [("hermes/intent/#",0), ("hermes/hotword/#", 0), ("hermes/asr/#", 0), ("hermes/nlu/#", 0), ("snipsmanager/#", 0)]
+
         self.log_info("Connecting to {} on port {}".format(self.mqtt_hostname, str(self.mqtt_port)))
 
         retry = 0
@@ -154,6 +156,9 @@ class Server():
         :param userdata: unused.
         :param msg: the MQTT message.
         """
+        if msg is None:
+            return
+
         self.log_info("New message on topic {}".format(msg.topic))
         self.log_debug("Payload {}".format(msg.payload))
         if msg.payload is None or len(msg.payload) == 0:
@@ -162,10 +167,11 @@ class Server():
             payload = json.loads(msg.payload.decode('utf-8'))
             intent = IntentParser.parse(payload, self.registry.intent_classes)
             self.log_debug("Parsed intent: {}".format(intent))
-            if intent is not None and self.handle_intent is not None:
-                self.log_debug("New intent: {}".format(str(intent.intentName)))
+            if self.handle_intent is not None:
+                if intent is not None:
+                    self.log_debug("New intent: {}".format(str(intent.intentName)))
                 self.handle_intent(intent, payload)
-        elif msg.topic == MQTT_TOPIC_HOTWORD + "toggleOn":
+        elif msg.topic is not None and msg.topic == MQTT_TOPIC_HOTWORD + "toggleOn":
             self.state_handler.set_state(State.hotword_toggle_on)
         elif MQTT_TOPIC_HOTWORD_DETECTED_RE.match(msg.topic):
             if not self.first_hotword_detected:
@@ -179,8 +185,15 @@ class Server():
             self.state_handler.set_state(State.asr_start_listening)
         elif msg.topic == MQTT_TOPIC_ASR + "textCaptured":
             self.state_handler.set_state(State.asr_text_captured)
+            if msg.payload is not None:
+                self.log_debug("Text captured: {}".format(str(msg.payload)))
             if self.handle_done_listening is not None:
                 self.handle_done_listening()
+            payload = json.loads(msg.payload.decode('utf-8'))
+            if payload['text'] == '':
+                self.handle_intent(None, None)
+        elif msg.topic is not None and msg.topic == "hermes/nlu/intentNotRecognized":
+            self.handle_intent(None, None)
         elif msg.topic == "snipsmanager/setSnipsfile" and msg.payload:
             self.state_handler.set_state(State.asr_text_captured)
         elif msg.topic == MQTT_TOPIC_SESSION_STARTED:
