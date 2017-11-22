@@ -10,9 +10,6 @@ class SnipsDialogueAPI:
 	def __init__(self, client):
 		self.client = client
 
-	tts = endSession
-	speak = endSession
-
 	def start_session(self, customData=None, siteId="default"):
 		payload = {"siteId": siteId, "init": None, "customData": customData}
 		self.client.publish(HERMES_START_SESSION, payload=payload, qos=0, retain=False)
@@ -63,3 +60,6 @@ class SnipsDialogueAPI:
 		}
 		self.client.publish(HERMES_CONTINUE_SESSION, payload=payload, qos=0, retain=False)
 
+	# aliases 
+	tts = end_session
+	speak = end_session

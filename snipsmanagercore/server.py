@@ -13,7 +13,6 @@ from .thread_handler import ThreadHandler
 from .intent_parser import IntentParser
 from .snips_dialogue_api import SnipsDialogueAPI
 from .state_handler import StateHandler, State
-from .tts import SnipsTTS, GTTS
 
 MQTT_TOPIC_NLU = "hermes/nlu/"
 MQTT_TOPIC_HOTWORD = "hermes/hotword/"
@@ -68,14 +67,6 @@ class Server():
 
         if not (tts_service_id == "snips" or tts_service_id is None):
             self.log_error("Warning ! We only support Snips TTS.")
-
-        self.tts_service = SnipsTTS(
-            self.thread_handler,
-            mqtt_hostname,
-            mqtt_port,
-            "hermes/tts/say",
-            locale,
-            logger=self.logger)
 
         self.first_hotword_detected = False
 
