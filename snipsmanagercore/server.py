@@ -28,10 +28,10 @@ MQTT_TOPIC_SESSION_ENDED = MQTT_TOPIC_DIALOG_MANAGER + "sessionEnded"
 
 MQTT_TOPIC_HOTWORD_DETECTED_RE = re.compile("^hermes\/hotword(\/[a-zA-Z0-9]+)*\/detected$")
 
-DIALOGUE_EVENT_STARTED, DIALOGUE_EVENT_ENDED, DIALOGUE_EVENT_QUEUED = range(3)
 
 class Server():
     """ Snips core server. """
+    DIALOGUE_EVENT_STARTED, DIALOGUE_EVENT_ENDED, DIALOGUE_EVENT_QUEUED = range(3)
 
     def __init__(self,
                  mqtt_hostname,
@@ -186,15 +186,15 @@ class Server():
         elif msg.topic == MQTT_TOPIC_SESSION_STARTED:
             self.state_handler.set_state(State.session_started)
             if self.handlers_dialogue_events is not None:
-                self.handlers_dialogue_events(DIALOGUE_EVENT_STARTED)
+                self.handlers_dialogue_events(self.DIALOGUE_EVENT_STARTED)
         elif msg.topic == MQTT_TOPIC_SESSION_ENDED:
             self.state_handler.set_state(State.session_ended)
             if self.handlers_dialogue_events is not None:
-                self.handlers_dialogue_events(DIALOGUE_EVENT_ENDED)
+                self.handlers_dialogue_events(self.DIALOGUE_EVENT_ENDED)
         elif msg.topic == MQTT_TOPIC_SESSION_QUEUED:
             self.state_handler.set_state(State.session_queued)
             if self.handlers_dialogue_events is not None:
-                self.handlers_dialogue_events(DIALOGUE_EVENT_QUEUED)
+                self.handlers_dialogue_events(self.DIALOGUE_EVENT_QUEUED)
 
 
     def log_info(self, message):

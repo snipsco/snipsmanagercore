@@ -241,3 +241,11 @@ class IntentParser:
       if 'siteID' in payload:
         result = payload['siteID']
       return result
+
+    @staticmethod
+    def get_custom_data(payload):
+      result = None
+
+      if 'customData' in payload:
+        result = payload['customData']
+      return result
