@@ -7,6 +7,9 @@ HERMES_CONTINUE_SESSION = "hermes/dialogueManager/continueSession"
 
 class SnipsDialogueAPI:
 
+	sessionId = None
+	siteId = "default"
+
 	def __init__(self, client):
 		self.client = client
 
@@ -30,7 +33,7 @@ class SnipsDialogueAPI:
 
 		self.client.publish(HERMES_START_SESSION, payload=payload, qos=0, retain=False)
 
-	def start_notification(self, ttsContent, siteId = "default", customData=None):
+	def start_notification(self, ttsContent, siteId="default", customData=None):
 		action = {
 			"type": "notification",
 			"text": ttsContent,
@@ -45,6 +48,9 @@ class SnipsDialogueAPI:
 		self.client.publish(HERMES_START_SESSION, payload=payload, qos=0, retain=False)
 
 	def end_session(self, sessionId, ttsContent):
+		if(sessionId is None and self.sessionId is not None):
+			sessionId = self.sessionId
+
 		payload = {
 			"sessionId": sessionId,
 			"text": ttsContent,
@@ -53,6 +59,9 @@ class SnipsDialogueAPI:
 		self.client.publish(HERMES_END_SESSION, payload=payload, qos=0, retain=False)
 
 	def continue_session(self, sessionId, ttsContent, intentFilter):
+		if(sessionId is None and self.sessionId is not None):
+			sessionId = self.sessionId
+			
 		payload = {
 			"sessionId": sessionId,
 			"text": ttsContent,
