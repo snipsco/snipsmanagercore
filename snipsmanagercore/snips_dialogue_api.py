@@ -10,11 +10,14 @@ class SnipsDialogueAPI:
 	def __init__(self, client):
 		self.client = client
 
-	def start_session(self, siteId, customData):
+	tts = endSession
+	speak = endSession
+
+	def start_session(self, customData=None, siteId="default"):
 		payload = {"siteId": siteId, "init": None, "customData": customData}
 		self.client.publish(HERMES_START_SESSION, payload=payload, qos=0, retain=False)
 
-	def start_action(self, siteId, customData, ttsContent, canBeEnqueued, intentFilter):
+	def start_action(self, ttsContent, canBeEnqueued, intentFilter, customData=None, siteId="default"):
 		action = {
 			"type": "action",
 			"text": ttsContent,
@@ -30,7 +33,7 @@ class SnipsDialogueAPI:
 
 		self.client.publish(HERMES_START_SESSION, payload=payload, qos=0, retain=False)
 
-	def start_notification(self, siteId, customData, ttsContent):
+	def start_notification(self, ttsContent, siteId = "default", customData=None):
 		action = {
 			"type": "notification",
 			"text": ttsContent,
@@ -59,3 +62,4 @@ class SnipsDialogueAPI:
 			"intentFilter": intentFilter
 		}
 		self.client.publish(HERMES_CONTINUE_SESSION, payload=payload, qos=0, retain=False)
+
