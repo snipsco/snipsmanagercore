@@ -153,7 +153,11 @@ class Server():
         self.log_info("New message on topic {}".format(msg.topic))
         self.log_debug("Payload {}".format(msg.payload))
         if msg.payload is None or len(msg.payload) == 0:
-            pass
+            if msg.payload:
+                payload = json.loads(msg.payload.decode('utf-8'))
+                self.siteId = payload.get('siteId')
+                self.sessionId = payload.get('sessionId')
+                
         if msg.topic is not None and msg.topic.startswith(MQTT_TOPIC_INTENT) and msg.payload:
             payload = json.loads(msg.payload.decode('utf-8'))
             intent = IntentParser.parse(payload, self.registry.intent_classes)
