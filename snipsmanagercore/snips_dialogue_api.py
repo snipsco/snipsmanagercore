@@ -13,15 +13,15 @@ class SnipsDialogueAPI:
 	sessionId = None
 	siteId = "default"
 
-	def __init__(self, client, locale="en_US"):
+	def __init__(self, client, tts_service_id, locale="en_US"):
 		self.client = client
 		self.gtts = GTTS(locale)
 
 		# aliases 
-		if tts_service is None or (type(tts_service) is str and tts_service.decode('utf-8').lower() == "snips"):
+		if tts_service_id is None or (type(tts_service_id) is str and tts_service_id.decode('utf-8').lower() == "snips"):
 			self.tts = self.end_session
 			self.speak = self.end_session
-		elif tts_service is (type(tts_service) is str and tts_service.decode('utf-8').lower() == "google"):
+		elif tts_service_id is (type(tts_service_id) is str and tts_service_id.decode('utf-8').lower() == "google"):
 			self.tts = self.google_end_session
 			self.speak = self.google_end_session
 
