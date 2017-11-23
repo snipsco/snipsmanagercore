@@ -16,6 +16,7 @@ class SnipsDialogueAPI:
 	def __init__(self, client, tts_service_id, locale="en_US"):
 		self.client = client
 		self.gtts = GTTS(locale)
+		self.tts_method = None
 
 		# aliases 
 		if tts_service_id is None or (type(tts_service_id) is str and tts_service_id.decode('utf-8').lower() == "snips"):
