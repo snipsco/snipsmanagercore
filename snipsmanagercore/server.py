@@ -63,7 +63,7 @@ class Server():
         self.client.on_message = self.on_message
         self.mqtt_hostname = mqtt_hostname
         self.mqtt_port = mqtt_port
-        self.dialogue = SnipsDialogueAPI(self.client, locale)
+        self.dialogue = SnipsDialogueAPI(self.client, tts_service_id, locale)
 
         if tts_service_id is not "snips" \
                 or tts_service_id is not "google" \
