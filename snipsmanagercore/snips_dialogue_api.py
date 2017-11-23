@@ -19,11 +19,14 @@ class SnipsDialogueAPI:
 
 		# aliases 
 		if tts_service_id is None or (type(tts_service_id) is str and tts_service_id.decode('utf-8').lower() == "snips"):
-			self.tts = self.end_session
-			self.speak = self.end_session
+			self.tts_method = self.end_session
 		elif tts_service_id is (type(tts_service_id) is str and tts_service_id.decode('utf-8').lower() == "google"):
-			self.tts = self.google_end_session
-			self.speak = self.google_end_session
+			self.tts_method = self.google_end_session
+
+	def speak(self, ttsContent, sessionId=None):
+		if (self.tts_method is not None):
+			self.tts_method(ttsContent, sessionId)
+
 
 	def google_end_session(self, ttsContent, sessionId):
 		self.gtts.speak(ttsContent)
@@ -84,6 +87,3 @@ class SnipsDialogueAPI:
 			"intentFilter": intentFilter
 		}
 		self.client.publish(HERMES_CONTINUE_SESSION, payload=json.dumps(payload), qos=0, retain=False)
-
-	self.tts = self.end_session
-	self.speak = self.end_session
