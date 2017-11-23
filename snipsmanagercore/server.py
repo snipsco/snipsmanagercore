@@ -67,7 +67,7 @@ class Server():
 
         if tts_service_id is not "snips"\
             and tts_service_id is not "google"\
-            and tts_service_id is not None):
+            and tts_service_id is not None:
             self.log_error("Warning ! We only support Snips or Google TTS.")
 
         self.first_hotword_detected = False
