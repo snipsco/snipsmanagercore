@@ -63,10 +63,12 @@ class Server():
         self.client.on_message = self.on_message
         self.mqtt_hostname = mqtt_hostname
         self.mqtt_port = mqtt_port
-        self.dialogue = SnipsDialogueAPI(self.client)
+        self.dialogue = SnipsDialogueAPI(self.client, locale)
 
-        if not (tts_service_id == "snips" or tts_service_id is None):
-            self.log_error("Warning ! We only support Snips TTS.")
+        if tts_service_id is not "snips"\
+            or tts_service_id is not "google"\
+            or tts_service_id is not None):
+            self.log_error("Warning ! We only support Snips or Google TTS.")
 
         self.first_hotword_detected = False
 
