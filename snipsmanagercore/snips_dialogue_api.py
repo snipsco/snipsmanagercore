@@ -21,7 +21,7 @@ class SnipsDialogueAPI:
 		# aliases 
 		if tts_service_id is None or (type(tts_service_id) is str and tts_service_id.decode('utf-8').lower() == "snips"):
 			self.tts_method = self.end_session
-		elif tts_service_id is (type(tts_service_id) is str and tts_service_id.decode('utf-8').lower() == "google"):
+		elif (type(tts_service_id) is str and tts_service_id.decode('utf-8').lower() == "google"):
 			self.tts_method = self.google_end_session
 
 	def speak(self, ttsContent, sessionId=None):
