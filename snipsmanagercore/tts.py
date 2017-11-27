@@ -24,19 +24,19 @@ class GTTS:
         """ Speak a sentence using Google TTS.
         :param sentence: the sentence to speak.
         """
-        snips_dir = ".snips"
+        temp_dir = "/tmp/"
         filename = "gtts.mp3"
-        file_path = "{}/{}".format(snips_dir, filename)
+        file_path = "{}/{}".format(temp_dir, filename)
 
-        if not os.path.exists(snips_dir):
-            os.makedirs(snips_dir)
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)
 
         def delete_file():
             try:
                 os.remove(file_path)
-                if not os.listdir(snips_dir):
+                if not os.listdir(temp_dir):
                     try:
-                        os.rmdir(snips_dir)
+                        os.rmdir(temp_dir)
                     except OSError:
                         pass
             except:
