@@ -29,7 +29,7 @@ class SnipsDialogueAPI:
 			self.tts_method(ttsContent, sessionId)
 
 
-	def google_end_session(self, ttsContent, sessionId):
+	def google_end_session(self, ttsContent, sessionId=None):
 		self.gtts.speak(ttsContent)
 		self.end_session(None, sessionId)
 
@@ -73,9 +73,8 @@ class SnipsDialogueAPI:
 
 		payload = {
 			"sessionId": sessionId,
-			"text": ttsContent,
+			"text": ttsContent
 		}
-
 		self.client.publish(HERMES_END_SESSION, payload=json.dumps(payload), qos=0, retain=False)
 
 	def continue_session(self, ttsContent, intentFilter=[], sessionId=None):

@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# _do_not_push
+_do_not_push*
+
 # C extensions
 *.so
 .idea/
