@@ -75,7 +75,7 @@ class SnipsDialogueAPI:
         }
         self.client.publish(HERMES_END_SESSION, payload=json.dumps(payload), qos=0, retain=False)
 
-    def continue_session(self, ttsContent, intentFilter=[], sessionId):
+    def continue_session(self, ttsContent, sessionId, intentFilter=[]):
         if sessionId is None:
             raise SessionIdError
 
