@@ -64,7 +64,6 @@ class Server():
         self.mqtt_hostname = mqtt_hostname
         self.mqtt_port = mqtt_port
         self.dialogue = SnipsDialogueAPI(self.client, tts_service_id, locale)
-        # self.tts = self.dialogue
 
         if tts_service_id not in ["snips", "google", None]:
             self.log_error("Warning ! We only support Snips or Google TTS.")
@@ -156,10 +155,11 @@ class Server():
 
         if msg.payload is None or len(msg.payload) == 0:
            pass
+
         if msg.payload:
            payload = json.loads(msg.payload.decode('utf-8'))
-           self.dialogue.siteId = payload.get('siteId')
-           self.dialogue.sessionId = payload.get('sessionId')
+           siteId = payload.get('siteId')
+           sessionId = payload.get('sessionId')
 
         if msg.topic is not None and msg.topic.startswith(MQTT_TOPIC_INTENT) and msg.payload:
             payload = json.loads(msg.payload.decode('utf-8'))
@@ -197,15 +197,15 @@ class Server():
         elif msg.topic == MQTT_TOPIC_SESSION_STARTED:
             self.state_handler.set_state(State.session_started)
             if self.handlers_dialogue_events is not None:
-                self.handlers_dialogue_events(self.DIALOGUE_EVENT_STARTED)
+                self.handlers_dialogue_events(self.DIALOGUE_EVENT_STARTED, sessionId, siteId)
         elif msg.topic == MQTT_TOPIC_SESSION_ENDED:
             self.state_handler.set_state(State.session_ended)
             if self.handlers_dialogue_events is not None:
-                self.handlers_dialogue_events(self.DIALOGUE_EVENT_ENDED)
+                self.handlers_dialogue_events(self.DIALOGUE_EVENT_ENDED, sessionId, siteId)
         elif msg.topic == MQTT_TOPIC_SESSION_QUEUED:
             self.state_handler.set_state(State.session_queued)
             if self.handlers_dialogue_events is not None:
-                self.handlers_dialogue_events(self.DIALOGUE_EVENT_QUEUED)
+                self.handlers_dialogue_events(self.DIALOGUE_EVENT_QUEUED, sessionId, siteId)
 
     def log_info(self, message):
         if self.logger is not None:
