@@ -13,8 +13,6 @@ from .thread_handler import ThreadHandler
 from .intent_parser import IntentParser
 from .snips_dialogue_api import SnipsDialogueAPI
 from .state_handler import StateHandler, State
-from .tts import SnipsTTS, GTTS
-
 
 MQTT_TOPIC_NLU = "hermes/nlu/"
 MQTT_TOPIC_HOTWORD = "hermes/hotword/"
@@ -40,9 +38,9 @@ class Server():
                  locale,
                  registry,
                  handle_intent,
-                 handlers_dialogue_events = None,
-                 handle_start_listening = None,
-                 handle_done_listening = None,
+                 handlers_dialogue_events=None,
+                 handle_start_listening=None,
+                 handle_done_listening=None,
                  logger=None):
         """ Initialisation.
 
@@ -65,18 +63,10 @@ class Server():
         self.client.on_message = self.on_message
         self.mqtt_hostname = mqtt_hostname
         self.mqtt_port = mqtt_port
-        self.dialogue = SnipsDialogueAPI(self.client)
+        self.dialogue = SnipsDialogueAPI(self.client, tts_service_id, locale)
 
-        if tts_service_id == "google":
-            self.tts_service = GTTS(locale, logger=self.logger)
-        else:
-            self.tts_service = SnipsTTS(
-                self.thread_handler,
-                mqtt_hostname,
-                mqtt_port,
-                "hermes/tts/say",
-                locale,
-                logger=self.logger)
+        if tts_service_id not in ["snips", "google", None]:
+            self.log_error("Warning ! We only support Snips or Google TTS.")
 
         self.first_hotword_detected = False
 
@@ -90,7 +80,8 @@ class Server():
 
         :param run_event: a run event object provided by the thread handler.
         """
-        topics = [("hermes/intent/#",0), ("hermes/hotword/#", 0), ("hermes/asr/#", 0), ("hermes/nlu/#", 0), ("snipsmanager/#", 0)]
+        topics = [("hermes/intent/#", 0), ("hermes/hotword/#", 0), ("hermes/asr/#", 0), ("hermes/nlu/#", 0),
+                  ("snipsmanager/#", 0)]
 
         self.log_info("Connecting to {} on port {}".format(self.mqtt_hostname, str(self.mqtt_port)))
 
@@ -161,8 +152,15 @@ class Server():
 
         self.log_info("New message on topic {}".format(msg.topic))
         self.log_debug("Payload {}".format(msg.payload))
+
         if msg.payload is None or len(msg.payload) == 0:
-            pass
+           pass
+
+        if msg.payload:
+           payload = json.loads(msg.payload.decode('utf-8'))
+           siteId = payload.get('siteId')
+           sessionId = payload.get('sessionId')
+
         if msg.topic is not None and msg.topic.startswith(MQTT_TOPIC_INTENT) and msg.payload:
             payload = json.loads(msg.payload.decode('utf-8'))
             intent = IntentParser.parse(payload, self.registry.intent_classes)
@@ -199,16 +197,15 @@ class Server():
         elif msg.topic == MQTT_TOPIC_SESSION_STARTED:
             self.state_handler.set_state(State.session_started)
             if self.handlers_dialogue_events is not None:
-                self.handlers_dialogue_events(self.DIALOGUE_EVENT_STARTED)
+                self.handlers_dialogue_events(self.DIALOGUE_EVENT_STARTED, sessionId, siteId)
         elif msg.topic == MQTT_TOPIC_SESSION_ENDED:
             self.state_handler.set_state(State.session_ended)
             if self.handlers_dialogue_events is not None:
-                self.handlers_dialogue_events(self.DIALOGUE_EVENT_ENDED)
+                self.handlers_dialogue_events(self.DIALOGUE_EVENT_ENDED, sessionId, siteId)
         elif msg.topic == MQTT_TOPIC_SESSION_QUEUED:
             self.state_handler.set_state(State.session_queued)
             if self.handlers_dialogue_events is not None:
-                self.handlers_dialogue_events(self.DIALOGUE_EVENT_QUEUED)
-
+                self.handlers_dialogue_events(self.DIALOGUE_EVENT_QUEUED, sessionId, siteId)
 
     def log_info(self, message):
         if self.logger is not None:
