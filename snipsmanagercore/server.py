@@ -63,6 +63,8 @@ class Server():
         self.client.on_message = self.on_message
         self.mqtt_hostname = mqtt_hostname
         self.mqtt_port = mqtt_port
+        self.tts_service_id = tts_service_id
+        self.locale = locale
         self.dialogue = SnipsDialogueAPI(self.client, tts_service_id, locale)
 
         if tts_service_id not in ["snips", "google", None]:
