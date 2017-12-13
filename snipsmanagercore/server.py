@@ -11,13 +11,25 @@ import paho.mqtt.client as mqtt
 
 from .thread_handler import ThreadHandler
 from .intent_parser import IntentParser
+from .snips_dialogue_api import SnipsDialogueAPI
 from .state_handler import StateHandler, State
-from .tts import SnipsTTS, GTTS
 
-HOTWORD_DETECTED_RE = re.compile("^hermes\/hotword(\/[a-zA-Z0-9]+)*\/detected$")
+MQTT_TOPIC_NLU = "hermes/nlu/"
+MQTT_TOPIC_HOTWORD = "hermes/hotword/"
+MQTT_TOPIC_ASR = "hermes/asr/"
+MQTT_TOPIC_DIALOG_MANAGER = "hermes/dialogueManager/"
+MQTT_TOPIC_SNIPSFILE = "snipsskills/setSnipsfile/"
+MQTT_TOPIC_INTENT = "hermes/intent/"
+MQTT_TOPIC_SESSION_QUEUED = MQTT_TOPIC_DIALOG_MANAGER + "sessionQueued"
+MQTT_TOPIC_SESSION_STARTED = MQTT_TOPIC_DIALOG_MANAGER + "sessionStarted"
+MQTT_TOPIC_SESSION_ENDED = MQTT_TOPIC_DIALOG_MANAGER + "sessionEnded"
+
+MQTT_TOPIC_HOTWORD_DETECTED_RE = re.compile("^hermes\/hotword(\/[a-zA-Z0-9]+)*\/detected$")
+
 
 class Server():
     """ Snips core server. """
+    DIALOGUE_EVENT_STARTED, DIALOGUE_EVENT_ENDED, DIALOGUE_EVENT_QUEUED = range(3)
 
     def __init__(self,
                  mqtt_hostname,
@@ -26,8 +38,9 @@ class Server():
                  locale,
                  registry,
                  handle_intent,
-                 handle_start_listening = None,
-                 handle_done_listening = None,
+                 handlers_dialogue_events=None,
+                 handle_start_listening=None,
+                 handle_done_listening=None,
                  logger=None):
         """ Initialisation.
 
@@ -38,6 +51,7 @@ class Server():
         self.logger = logger
         self.registry = registry
         self.handle_intent = handle_intent
+        self.handlers_dialogue_events = handlers_dialogue_events
         self.handle_start_listening = handle_start_listening
         self.handle_done_listening = handle_done_listening
         self.thread_handler = ThreadHandler()
@@ -49,17 +63,9 @@ class Server():
         self.client.on_message = self.on_message
         self.mqtt_hostname = mqtt_hostname
         self.mqtt_port = mqtt_port
-
-        if tts_service_id == "google":
-            self.tts_service = GTTS(locale, logger=self.logger)
-        else:
-            self.tts_service = SnipsTTS(
-                self.thread_handler,
-                mqtt_hostname,
-                mqtt_port,
-                "hermes/tts/say",
-                locale,
-                logger=self.logger)
+        self.tts_service_id = tts_service_id
+        self.locale = locale
+        self.dialogue = SnipsDialogueAPI(self.client, tts_service_id, locale)
 
         self.first_hotword_detected = False
 
@@ -73,7 +79,8 @@ class Server():
 
         :param run_event: a run event object provided by the thread handler.
         """
-        topics = [("hermes/intent/#",0), ("hermes/hotword/#", 0), ("hermes/asr/#", 0), ("hermes/nlu/#", 0), ("snipsmanager/#", 0)]
+        topics = [("hermes/intent/#", 0), ("hermes/hotword/#", 0), ("hermes/asr/#", 0), ("hermes/nlu/#", 0),
+                  ("snipsmanager/#", 0)]
 
         self.log_info("Connecting to {} on port {}".format(self.mqtt_hostname, str(self.mqtt_port)))
 
@@ -87,7 +94,17 @@ class Server():
                 self.log_info("MQTT error {}".format(e))
                 time.sleep(5 + int(retry / 5))
                 retry = retry + 1
+
+        topics = [
+            (MQTT_TOPIC_INTENT + '#', 0),
+            (MQTT_TOPIC_HOTWORD + '#', 0),
+            (MQTT_TOPIC_ASR + '#', 0),
+            (MQTT_TOPIC_SNIPSFILE, 0),
+            (MQTT_TOPIC_DIALOG_MANAGER + '#', 0),
+            ("snipsmanager/#", 0)
+        ]
         self.client.subscribe(topics)
+
         while run_event.is_set():
             try:
                 self.client.loop()
@@ -134,9 +151,16 @@ class Server():
 
         self.log_info("New message on topic {}".format(msg.topic))
         self.log_debug("Payload {}".format(msg.payload))
+
         if msg.payload is None or len(msg.payload) == 0:
             pass
-        if msg.topic is not None and msg.topic.startswith("hermes/intent/") and msg.payload:
+
+        if msg.payload:
+            payload = json.loads(msg.payload.decode('utf-8'))
+            site_id = payload.get('siteId')
+            session_id = payload.get('sessionId')
+
+        if msg.topic is not None and msg.topic.startswith(MQTT_TOPIC_INTENT) and msg.payload:
             payload = json.loads(msg.payload.decode('utf-8'))
             intent = IntentParser.parse(payload, self.registry.intent_classes)
             self.log_debug("Parsed intent: {}".format(intent))
@@ -144,9 +168,9 @@ class Server():
                 if intent is not None:
                     self.log_debug("New intent: {}".format(str(intent.intentName)))
                 self.handle_intent(intent, payload)
-        elif msg.topic is not None and msg.topic == "hermes/hotword/toggleOn":
+        elif msg.topic is not None and msg.topic == MQTT_TOPIC_HOTWORD + "toggleOn":
             self.state_handler.set_state(State.hotword_toggle_on)
-        elif HOTWORD_DETECTED_RE.match(msg.topic):
+        elif MQTT_TOPIC_HOTWORD_DETECTED_RE.match(msg.topic):
             if not self.first_hotword_detected:
                 self.client.publish(
                     "hermes/feedback/sound/toggleOff", payload=None, qos=0, retain=False)
@@ -154,9 +178,9 @@ class Server():
             self.state_handler.set_state(State.hotword_detected)
             if self.handle_start_listening is not None:
                 self.handle_start_listening()
-        elif msg.topic == "hermes/asr/startListening":
+        elif msg.topic == MQTT_TOPIC_ASR + "startListening":
             self.state_handler.set_state(State.asr_start_listening)
-        elif msg.topic == "hermes/asr/textCaptured":
+        elif msg.topic == MQTT_TOPIC_ASR + "textCaptured":
             self.state_handler.set_state(State.asr_text_captured)
             if msg.payload is not None:
                 self.log_debug("Text captured: {}".format(str(msg.payload)))
@@ -169,6 +193,18 @@ class Server():
             self.handle_intent(None, None)
         elif msg.topic == "snipsmanager/setSnipsfile" and msg.payload:
             self.state_handler.set_state(State.asr_text_captured)
+        elif msg.topic == MQTT_TOPIC_SESSION_STARTED:
+            self.state_handler.set_state(State.session_started)
+            if self.handlers_dialogue_events is not None:
+                self.handlers_dialogue_events(self.DIALOGUE_EVENT_STARTED, session_id, site_id)
+        elif msg.topic == MQTT_TOPIC_SESSION_ENDED:
+            self.state_handler.set_state(State.session_ended)
+            if self.handlers_dialogue_events is not None:
+                self.handlers_dialogue_events(self.DIALOGUE_EVENT_ENDED, session_id, site_id)
+        elif msg.topic == MQTT_TOPIC_SESSION_QUEUED:
+            self.state_handler.set_state(State.session_queued)
+            if self.handlers_dialogue_events is not None:
+                self.handlers_dialogue_events(self.DIALOGUE_EVENT_QUEUED, session_id, site_id)
 
     def log_info(self, message):
         if self.logger is not None:
