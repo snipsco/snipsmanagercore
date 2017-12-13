@@ -23,71 +23,71 @@ class SnipsDialogueAPI:
         elif (type(tts_service_id) is str and tts_service_id.decode('utf-8').lower() == "google"):
             self.tts_method = self.google_end_session
 
-    def speak(self, ttsContent, sessionId=None):
+    def speak(self, tts_content, session_id=None):
         if (self.tts_method is not None):
-            self.tts_method(ttsContent, sessionId)
+            self.tts_method(tts_content, session_id)
 
-    def google_end_session(self, ttsContent, sessionId=None):
-        self.gtts.speak(ttsContent)
-        self.end_session(None, sessionId)
+    def google_end_session(self, tts_content, session_id=None):
+        self.gtts.speak(tts_content)
+        self.end_session(None, session_id)
 
-    def start_session(self, customData=None, siteId="default"):
-        payload = {"siteId": siteId, "init": None, "customData": customData}
+    def start_session(self, custom_data=None, site_id="default"):
+        payload = {"siteId": site_id, "init": None, "customData": custom_data}
         self.client.publish(HERMES_START_SESSION, payload=json.dumps(payload), qos=0, retain=False)
 
-    def start_action(self, ttsContent, canBeEnqueued, intentFilter=[], customData=None, siteId="default"):
+    def start_action(self, tts_content, can_be_enqueued, intent_filter=[], custom_data=None, site_id="default"):
         action = {
             "type": "action",
-            "text": ttsContent,
-            "canBeEnqueued": canBeEnqueued,
-            "intentFilter": intentFilter
+            "text": tts_content,
+            "canBeEnqueued": can_be_enqueued,
+            "intentFilter": intent_filter
         }
 
         payload = {
-            "siteId": siteId,
+            "siteId": site_id,
             "init": action,
-            "customData": customData
+            "customData": custom_data
         }
 
         self.client.publish(HERMES_START_SESSION, payload=json.dumps(payload), qos=0, retain=False)
 
-    def start_notification(self, ttsContent, siteId="default", customData=None):
+    def start_notification(self, tts_content, site_id="default", custom_data=None):
         action = {
             "type": "notification",
-            "text": ttsContent,
+            "text": tts_content,
         }
 
         payload = {
-            "siteId": siteId,
+            "siteId": site_id,
             "init": action,
-            "customData": customData
+            "customData": custom_data
         }
 
         self.client.publish(HERMES_START_SESSION, payload=json.dumps(payload), qos=0, retain=False)
 
-    def end_session(self, ttsContent, sessionId):
-        if sessionId is None:
+    def end_session(self, tts_content, session_id):
+        if session_id is None:
             raise SessionIdError
 
         payload = {
-            "sessionId": sessionId,
-            "text": ttsContent
+            "sessionId": session_id,
+            "text": tts_content
         }
         self.client.publish(HERMES_END_SESSION, payload=json.dumps(payload), qos=0, retain=False)
 
-    def continue_session(self, ttsContent, sessionId, intentFilter=[]):
-        if sessionId is None:
+    def continue_session(self, tts_content, session_id, intent_filter=[]):
+        if session_id is None:
             raise SessionIdError
 
         payload = {
-            "sessionId": sessionId,
-            "text": ttsContent,
-            "intentFilter": intentFilter
+            "sessionId": session_id,
+            "text": tts_content,
+            "intentFilter": intent_filter
         }
         self.client.publish(HERMES_CONTINUE_SESSION, payload=json.dumps(payload), qos=0, retain=False)
 
-class DialogueError(Exception):
+class DialogError(Exception):
     pass
 
-class SessionIdError(DialogueError):
+class SessionIdError(DialogError):
     pass
