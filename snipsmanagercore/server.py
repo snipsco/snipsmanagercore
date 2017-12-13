@@ -67,9 +67,6 @@ class Server():
         self.locale = locale
         self.dialogue = SnipsDialogueAPI(self.client, tts_service_id, locale)
 
-        if tts_service_id not in ["snips", "google", None]:
-            self.log_error("Warning ! We only support Snips or Google TTS.")
-
         self.first_hotword_detected = False
 
     def start(self):
@@ -156,12 +153,12 @@ class Server():
         self.log_debug("Payload {}".format(msg.payload))
 
         if msg.payload is None or len(msg.payload) == 0:
-           pass
+            pass
 
         if msg.payload:
-           payload = json.loads(msg.payload.decode('utf-8'))
-           siteId = payload.get('siteId')
-           sessionId = payload.get('sessionId')
+            payload = json.loads(msg.payload.decode('utf-8'))
+            site_id = payload.get('siteId')
+            session_id = payload.get('sessionId')
 
         if msg.topic is not None and msg.topic.startswith(MQTT_TOPIC_INTENT) and msg.payload:
             payload = json.loads(msg.payload.decode('utf-8'))
@@ -199,15 +196,15 @@ class Server():
         elif msg.topic == MQTT_TOPIC_SESSION_STARTED:
             self.state_handler.set_state(State.session_started)
             if self.handlers_dialogue_events is not None:
-                self.handlers_dialogue_events(self.DIALOGUE_EVENT_STARTED, sessionId, siteId)
+                self.handlers_dialogue_events(self.DIALOGUE_EVENT_STARTED, session_id, site_id)
         elif msg.topic == MQTT_TOPIC_SESSION_ENDED:
             self.state_handler.set_state(State.session_ended)
             if self.handlers_dialogue_events is not None:
-                self.handlers_dialogue_events(self.DIALOGUE_EVENT_ENDED, sessionId, siteId)
+                self.handlers_dialogue_events(self.DIALOGUE_EVENT_ENDED, session_id, site_id)
         elif msg.topic == MQTT_TOPIC_SESSION_QUEUED:
             self.state_handler.set_state(State.session_queued)
             if self.handlers_dialogue_events is not None:
-                self.handlers_dialogue_events(self.DIALOGUE_EVENT_QUEUED, sessionId, siteId)
+                self.handlers_dialogue_events(self.DIALOGUE_EVENT_QUEUED, session_id, site_id)
 
     def log_info(self, message):
         if self.logger is not None:
