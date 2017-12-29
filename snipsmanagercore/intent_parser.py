@@ -114,23 +114,25 @@ class IntentParser:
         if not 'slots' in payload:
             return None
 
-        slot = None
+        slots = []
         for candidate in payload['slots']:
             if 'slotName' in candidate and candidate['slotName'] == slot_name:
-                slot = candidate
-                break
+                slots.append(candidate)
 
-        if not slot:
+        if slots == []:
             return None
 
-        kind = IntentParser.get_dict_value(slot, ['value', 'kind'])
-        if kind == "InstantTime":
-            return IntentParser.parse_instant_time(slot)
-        elif kind == "TimeInterval":
-            return IntentParser.parse_time_interval(slot)
-
-        return IntentParser.get_dict_value(slot, ['value', 'value', 'value']) \
-            or IntentParser.get_dict_value(slot, ['value', 'value'])
+        result = []
+        for slot in slots:
+            kind = IntentParser.get_dict_value(slot, ['value', 'kind'])
+            if kind == "InstantTime":
+                result.append(IntentParser.parse_instant_time(slot))
+            elif kind == "TimeInterval":
+                result.append(IntentParser.parse_time_interval(slot))
+            else:
+                result.append(IntentParser.get_dict_value(slot, ['value', 'value', 'value']) \
+                    or IntentParser.get_dict_value(slot, ['value', 'value']))
+        return result
 
     @staticmethod
     def parse_instant_time(slot):
