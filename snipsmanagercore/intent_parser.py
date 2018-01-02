@@ -112,15 +112,12 @@ class IntentParser:
         """
 
         if not 'slots' in payload:
-            return None
+            return []
 
         slots = []
         for candidate in payload['slots']:
             if 'slotName' in candidate and candidate['slotName'] == slot_name:
                 slots.append(candidate)
-
-        if slots == []:
-            return None
 
         result = []
         for slot in slots:
@@ -132,6 +129,7 @@ class IntentParser:
             else:
                 result.append(IntentParser.get_dict_value(slot, ['value', 'value', 'value']) \
                     or IntentParser.get_dict_value(slot, ['value', 'value']))
+
         return result
 
     @staticmethod
