@@ -11,10 +11,11 @@ import json
 
 class SnipsDialogueAPI:
 
-    def __init__(self, client, tts_service_id, locale="en_US"):
+    def __init__(self, client, tts_service_id, locale="en_US", default_session_id=None):
         self.client = client
         self.gtts = GTTS(locale)
         self.tts_method = None
+        self.default_session_id = default_session_id
 
         # aliases
         if tts_service_id is None or (
@@ -23,11 +24,18 @@ class SnipsDialogueAPI:
         elif (type(tts_service_id) is str and tts_service_id.decode('utf-8').lower() == "google"):
             self.tts_method = self.google_end_session
 
+    def set_default_session_id(self, session_id):
+        self.default_session_id = session_id
+
     def speak(self, tts_content, session_id=None):
+        if session_id is None and self.default_session_id is not None:
+            session_id = self.default_session_id
         if (self.tts_method is not None):
             self.tts_method(tts_content, session_id)
 
     def google_end_session(self, tts_content, session_id=None):
+        if session_id is None and self.default_session_id is not None:
+            session_id = self.default_session_id
         self.gtts.speak(tts_content)
         self.end_session(None, session_id)
 
@@ -65,7 +73,10 @@ class SnipsDialogueAPI:
 
         self.client.publish(HERMES_START_SESSION, payload=json.dumps(payload), qos=0, retain=False)
 
-    def end_session(self, tts_content, session_id):
+    def end_session(self, tts_content, session_id=None):
+        if session_id is None and self.default_session_id is not None:
+            session_id = self.default_session_id
+
         if session_id is None:
             raise SessionIdError
 
@@ -75,7 +86,10 @@ class SnipsDialogueAPI:
         }
         self.client.publish(HERMES_END_SESSION, payload=json.dumps(payload), qos=0, retain=False)
 
-    def continue_session(self, tts_content, session_id, intent_filter=[]):
+    def continue_session(self, tts_content, session_id=None, intent_filter=[]):
+        if session_id is None and self.default_session_id is not None:
+            session_id = self.default_session_id
+
         if session_id is None:
             raise SessionIdError
 
