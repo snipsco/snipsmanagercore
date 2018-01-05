@@ -36,5 +36,5 @@ class StateHandler:
         elif state == State.session_started:
             pass
         elif state == State.session_ended:
-            SoundService.play(SoundService.State.goodbye)
+            pass
         self.state = state

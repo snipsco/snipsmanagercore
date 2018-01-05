@@ -17,7 +17,15 @@ class USB:
 
     @staticmethod
     def get_boards():
-        all_devices = usb.core.find(find_all=True)
+        try:
+            all_devices = usb.core.find(find_all=True)
+        except Exception as e:
+            if str(e) != "No backend available":
+                raise
+            # When no USB port:
+            return USB.Device.unknown
+
+
 
         if not all_devices:
             return USB.Device.unknown
