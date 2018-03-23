@@ -16,7 +16,7 @@ $ pip install snipsmanagercore
 
 ## Contributing
 
-Please see the [Contribution Guidelines](https://github.com/snipsco/snipsmanagercore/blob/master/CONTRIBUTING.rst).
+Please see the [Contribution Guidelines](https://github.com/snipsco/snipsmanagercore/blob/master/CONTRIBUTING.md).
 
 ## Copyright
 
