@@ -1,4 +1,4 @@
-# Snips Manager Core Utilities
+# Snips Manager Core
 
 [![Build Status](https://travis-ci.org/snipsco/snipsmanagercore.svg)](https://travis-ci.org/snipsco/snipsmanagercore)
 [![PyPi](https://img.shields.io/pypi/v/snipsmanagercore.svg)](https://img.shields.io/pypi/v/snipsmanagercore.svg)
