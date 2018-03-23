@@ -16,8 +16,8 @@ $ pip install snipsmanagercore
 
 ## Contributing
 
-Please see the [Contribution Guidelines](https://github.com/snipsco/snips-skill-hue/blob/master/CONTRIBUTING.rst).
+Please see the [Contribution Guidelines](https://github.com/snipsco/snipsmanagercore/blob/master/CONTRIBUTING.rst).
 
 ## Copyright
 
-This skill is provided by [Snips](https://www.snips.ai) as Open Source software. See [LICENSE.txt](https://github.com/snipsco/snips-skill-hue/blob/master/LICENSE.txt) for more information.
+This skill is provided by [Snips](https://www.snips.ai) as Open Source software. See [LICENSE.txt](https://github.com/snipsco/snipsmanagercore/blob/master/LICENSE.txt) for more information.
