@@ -14,7 +14,7 @@ setup(
         'cython==0.21.1',
         'hidapi==0.7.99.post20',
         'paho-mqtt==1.3.0',
-        'pyyaml==3.12',
+        'pyyaml==5.1',
         'pyaudio==0.2.8',
         'pygame==1.9.3',
         'pyusb==1.0.0',
